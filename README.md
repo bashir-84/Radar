@@ -1,27 +1,37 @@
-# Radar — USDT / Toman
+# Radar — رادار رمزارز
 
-A responsive Persian dashboard for comparing USDT rates across exchanges.
+Web UI: https://bashir-84.github.io/Radar/
 
-## Website
-- GitHub Pages (after deployment is enabled): https://bashir-84.github.io/Radar/
-- Existing Cloudflare Worker: https://usdt-price-radar.bashiramri84.workers.dev/
-- Live JSON endpoint: https://usdt-price-radar.bashiramri84.workers.dev/api/prices
+Cloudflare price API: https://usdt-price-radar.bashiramri84.workers.dev/
 
-## Architecture
+## Supported assets
+- USDT — Tether (main quote in toman)
+- BTC — Bitcoin
+- ETH — Ethereum
+- PAXG — PAX Gold
+- GRAM — Gram (the new name for Toncoin/TON in supported Iranian markets)
+- XAUT — Tether Gold
 
-`index.html` runs directly on GitHub Pages. Clicking **دریافت قیمت‌ها** requests JSON from the existing Cloudflare Worker. Cloudflare obtains price data from its configured exchange APIs. GitHub Pages is static and does not itself fetch exchange APIs server-side.
+A sixth **additional** cryptocurrency slot remains reserved until the next symbol is specified. The UI currently has one featured asset and six horizontally-scrollable slots (five active plus one future slot).
 
-No API keys or Telegram tokens are stored in GitHub.
+## How it works
+- `index.html`: responsive Persian dashboard, Vazirmatn font, inline coin SVG icons, a 10-second loading bar and auto-refresh.
+- Click a cryptocurrency tile: it replaces the main/featured asset, and the previously featured asset takes that tile's place.
+- The URL uses `#coin/BTC`-style routes for linking to an asset view.
+- For USDT, the main figure is a *toman* buy quote.
+- For all other assets, the main figure is a *USDT* buy quote and the smaller figure is a *toman* quote.
+- For prices sourced from order books, *buy* means the best ask available. Actual transaction costs/fees and order depth are not reflected.
+- Derived toman values are explicitly marked as estimates (asset/USDT ask × USDT/toman ask at the **same exchange**), never displayed as executable direct toman prices.
+- Missing API data are left blank, rather than invented.
 
-## Files
-- `index.html`: standalone mobile-friendly Persian frontend; edit for UI/UX changes.
-- `.github/workflows/pages.yml`: deploys the static frontend when `main` changes.
+## APIs
+- `/api/prices` — existing USDT/toman feed across the previously configured exchanges; still running.
+- `/api/markets` — new multi-asset feed aggregating public market data from **Nobitex, Wallex and Bitpin**; returns per-asset, per-exchange USDT and toman quotes if available.
+- `api/markets.js` — source logic for the Cloudflare market API. This file has been embedded in the deployed Worker manually.
 
-## First-time GitHub Pages setup
-In the repository: **Settings → Pages → Build and deployment → Source: GitHub Actions**. Once configured, push to `main` or run **Actions → Publish Radar website → Run workflow**. Deployment URL: https://bashir-84.github.io/Radar/
+## Deployments
+The static frontend publishes automatically via `.github/workflows/pages.yml` whenever `index.html` changes on `main`.
 
-## Notes
-- Frontend and Worker are two distinct deployments. Updating the GitHub UI will **not** change the existing Cloudflare website.
-- Worker API responds on `/api/prices` and should include `Access-Control-Allow-Origin: *` for requests from GitHub Pages.
-- Missing and invalid rates must remain missing, not be replaced with fabricated values.
-- External exchange API connectivity and field schemas may vary. Verify quotes before acting on them.
+**Important:** GitHub Pages is the frontend, not the API server. Editing `api/markets.js` in GitHub does **not** automatically publish it to Cloudflare. Cloudflare backend changes must be deployed separately. No DNS configuration is involved.
+
+The website does not store or need exchange login credentials. Public exchange API availability and pairs may vary by time and region. Use price quotes for information, not as guaranteed executable rates.
