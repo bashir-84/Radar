@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0e1729">
+<title>رادار قیمت تتر</title>
+<style>
+:root{color-scheme:dark;--bg:#0e1729;--surface:#16253b;--panel:#101d2e;--line:#32445a;--ink:#f1f6ff;--muted:#a9bad0;--green:#71e4b8;--amber:#ffd39d;--danger:#ff9fa5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.8 Tahoma,Arial,sans-serif}
+button{font:inherit;cursor:pointer}
+main{max-width:1150px;margin:auto;padding:30px 18px}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+h1{font-size:clamp(24px,4vw,35px);margin:0}
+p,small{color:var(--muted)}
+button{border:0;border-radius:12px;background:var(--green);color:#073527;padding:12px 22px;font-weight:bold}
+button:disabled{opacity:.55;cursor:wait}
+.stats,.grid{display:grid;gap:12px;margin-top:18px}
+.stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:17px;min-width:0}
+.stat b{display:block;font-size:clamp(15px,2vw,21px);margin-top:3px}
+.head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tag{font-size:11px;color:var(--muted)}
+.tag.ok{color:var(--green)}.tag.error{color:var(--danger)}
+.values{display:flex;gap:8px;margin:12px 0}
+.val{flex:1;min-width:0;background:var(--panel);border-radius:10px;padding:10px;font-size:11px;color:var(--muted)}
+.val b{display:block;font-size:clamp(12px,1.6vw,18px);color:var(--green);overflow-wrap:anywhere;direction:ltr;text-align:right}
+.val b.sell{color:var(--amber)}
+.note{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+a{color:#9bcaf5}
+footer{margin-top:24px;color:var(--muted);font-size:12px}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){main{padding:16px 10px}.grid{gap:8px}.stats{gap:7px}.card{padding:10px;border-radius:11px}.head strong{font-size:12px}.tag{font-size:9px}.values{gap:4px}.val{padding:6px;font-size:10px}.val b{font-size:12px}.note{font-size:10px}.stat b{font-size:13px}button{width:100%}}
+</style>
+</head>
+<body>
+<main>
+<header><div><small>USDT / TOMAN</small><h1>رادار قیمت تتر</h1><p>مقایسه نرخ خرید و فروش در صرافی‌ها</p></div><button id="refresh">↻ دریافت قیمت‌ها</button></header>
+<section class="stats">
+<div class="card stat"><small>ارزان‌ترین خرید</small><b id="best-buy">—</b><small id="best-buy-name"></small></div>
+<div class="card stat"><small>بالاترین فروش</small><b id="best-sell">—</b><small id="best-sell-name"></small></div>
+<div class="card stat"><small>منابع پاسخ‌گو</small><b id="available">—</b><small id="checked-at"></small></div>
+</section>
+<section class="grid" id="cards" aria-live="polite"></section>
+<footer>همه مبالغ به تومان هستند. قیمت خرید/فروش بر اساس Ask/Bid است؛ کارمزد، حجم سفارش و لغزش قیمت لحاظ نشده است. نبود داده با عدد تخمینی جایگزین نمی‌شود.</footer>
+</main>
+<script>
+const API="https://usdt-price-radar.bashiramri84.workers.dev/api/prices";
+const $=id=>document.getElementById(id);
+const money=v=>Number.isFinite(v)&&v>0?Math.round(v).toLocaleString("fa-IR")+" تومان":"—";
+const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x};
+function draw(rows){
+$("cards").replaceChildren();
+for(const r of rows){
+ const card=el("article","card"),head=el("div","head"),name=el("strong","",r.name||r.id),tag=el("span","tag "+r.status,({ok:"دریافت شد",error:"خطا",no_irt:"بدون بازار تومان",unverified:"تأیید نشده"})[r.status]||r.status);
+ head.append(name,tag);card.append(head);
+ const values=el("div","values");
+ const entries=(r.buy||r.sell)?[["قیمت خرید",r.buy,""],["قیمت فروش",r.sell,"sell"]]:[[r.last?"نرخ اطلاع‌رسانی":r.min?"بازه OTC":"قیمت تومانی",r.last||r.min,""]];
+ for(const [label,price,cls] of entries){const v=el("div","val",label);v.append(el("b",cls,r.min&&!r.last&&!r.buy?money(r.min)+" تا "+money(r.max):money(price)));values.append(v)}
+ card.append(values,el("div","note",r.note||""));
+ if(r.apiUrl){const a=el("a","","مشاهده API");a.href=r.apiUrl;a.target="_blank";a.rel="noopener noreferrer";card.append(a)}
+ $("cards").append(card);
+}
+const buys=rows.filter(x=>x.status==="ok"&&x.buy>0).sort((a,b)=>a.buy-b.buy);
+const sells=rows.filter(x=>x.status==="ok"&&x.sell>0).sort((a,b)=>b.sell-a.sell);
+$("best-buy").textContent=money(buys[0]?.buy);$("best-buy-name").textContent=buys[0]?.name||"ناموجود";
+$("best-sell").textContent=money(sells[0]?.sell);$("best-sell-name").textContent=sells[0]?.name||"ناموجود";
+$("available").textContent=rows.filter(x=>x.status==="ok").length.toLocaleString("fa-IR")+" / "+rows.length.toLocaleString("fa-IR");
+}
+let busy=false;
+async function refresh(){
+if(busy)return;busy=true;$("refresh").disabled=true;$("refresh").textContent="در حال دریافت…";
+try{
+const response=await fetch(API+"?t="+Date.now(),{cache:"no-store"});
+if(!response.ok)throw new Error("HTTP "+response.status);
+const data=await response.json();if(!Array.isArray(data.prices))throw new Error("Invalid response");
+draw(data.prices);$("checked-at").textContent=new Date(data.fetchedAt||Date.now()).toLocaleTimeString("fa-IR");
+}catch(e){$("checked-at").textContent="خطای ارتباط: "+e.message}
+finally{busy=false;$("refresh").disabled=false;$("refresh").textContent="↻ دریافت قیمت‌ها"}
+}
+$("refresh").addEventListener("click",refresh);refresh();
+</script>
+</body></html>
