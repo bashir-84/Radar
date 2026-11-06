@@ -12,10 +12,11 @@ Cloudflare price API: https://usdt-price-radar.bashiramri84.workers.dev/
 - GRAM — Gram (the new name for Toncoin/TON in supported Iranian markets)
 - XAUT — Tether Gold
 
-A sixth **additional** cryptocurrency slot remains reserved until the next symbol is specified. The UI currently has one featured asset and six horizontally-scrollable slots (five active plus one future slot).
+Exactly six cryptocurrencies are configured: one featured asset and five clickable, horizontally scrollable asset tiles. There is no unused future-asset placeholder.
 
 ## How it works
-- `index.html`: responsive Persian dashboard, Vazirmatn font, inline coin SVG icons, a 10-second loading bar and auto-refresh.
+- `index.html`: responsive Persian dashboard, Vazirmatn font, locally hosted brand-accurate SVG coin icons, a 10-second loading bar and auto-refresh.
+- `assets/icons/*.svg`: six locally hosted cryptocurrency logos sourced from the Web3 Icons open-source curated brand icon library (https://github.com/0xa3k5/web3icons); official Gram branding matches https://ton.org/media/.
 - Click a cryptocurrency tile: it replaces the main/featured asset, and the previously featured asset takes that tile's place.
 - The URL uses `#coin/BTC`-style routes for linking to an asset view.
 - For USDT, the main figure is a *toman* buy quote.
