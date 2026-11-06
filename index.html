@@ -1,389 +1,428 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#101019">
-  <meta name="description" content="رادار قیمت تتر، مقایسه نرخ خرید و فروش USDT در صرافی‌های مختلف به تومان">
-  <title>رادار تتر | USDT Radar</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      color-scheme:dark;
-      --bg:#101019;--surface:#22252e;--surface-2:#2d303b;--surface-3:#373b46;
-      --stroke:#3a3e4a;--muted:#a4a9b5;--subtle:#7e8492;
-      --text:#f7f7f9;--orange:#ff991a;--orange-soft:#ffb54e;--green:#4dd39f;--red:#f78c95;
-      --radius:23px;--shadow:0 18px 50px rgba(0,0,0,.16);
-    }
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;background:var(--bg);color:var(--text);font:400 14px/1.8 "Vazirmatn",Tahoma,sans-serif;min-height:100vh}
-    button,input,select{font:inherit}
-    button{cursor:pointer}
-    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
-    a{color:inherit;text-decoration:none}
-    button:disabled{cursor:wait;opacity:.58}
-    .symbol{display:inline-flex;align-items:center;justify-content:center;flex:none}
-    .symbol svg{width:100%;height:100%;display:block}
-    .icon{display:inline-flex;align-items:center;justify-content:center;flex:none}
-    .icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-    .progress-track{position:fixed;top:0;left:0;right:0;height:4px;background:#3a3028;z-index:40;direction:ltr;overflow:hidden}
-    .progress-fill{height:100%;width:100%;transform:scaleX(0);transform-origin:left center;background:linear-gradient(90deg,#ffb255,#ff8315);will-change:transform}
-    .progress-fill.counting{animation:countdown 10s linear forwards}
-    .progress-fill.fetching{transform:scaleX(1);animation:glow .75s ease-in-out infinite alternate}
-    @keyframes countdown{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-    @keyframes glow{from{opacity:.42}to{opacity:1}}
-    .layout{max-width:1260px;margin:0 auto;padding:28px 27px 95px}
-    .nav{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:31px}
-    .brand{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:800;white-space:nowrap}
-    .brand-icon{display:grid;place-items:center;width:41px;height:41px;background:var(--orange);color:#171920;border-radius:14px;box-shadow:0 6px 24px rgba(255,153,26,.2)}
-    .brand-icon .icon svg{width:23px;height:23px;stroke-width:2}
-    .nav-links{display:flex;align-items:center;gap:20px;font-size:12px;color:var(--muted)}
-    .nav-links a:hover{color:var(--text)}
-    .live-pill{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--stroke);background:var(--surface);border-radius:100px;padding:7px 12px;font-size:11px;color:#d6d8df}
-    .live-dot{background:var(--green);box-shadow:0 0 0 4px rgba(77,211,159,.09);width:7px;height:7px;border-radius:50%}
-    .eyebrow{font-size:11px;color:var(--orange);letter-spacing:1.8px;font-weight:700}
-    .heading{margin:6px 0 6px;font-size:clamp(27px,4vw,41px);letter-spacing:-.5px;line-height:1.5;font-weight:800}
-    .intro{margin:0;color:var(--muted);max-width:620px;font-size:13px}
-    .hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(270px,.7fr);gap:17px;align-items:stretch}
-    .hero-copy{min-width:0;padding:18px 1px 18px 0;display:flex;flex-direction:column;justify-content:center}
-    .hero-controls{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:22px}
-    .primary{background:var(--orange);color:#14151b;border:1px solid transparent;padding:11px 19px;border-radius:13px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,transform .2s}
-    .primary:hover{background:#ffb044;transform:translateY(-1px)}
-    .outline-btn{background:var(--surface);border:1px solid var(--stroke);color:#e5e6ec;border-radius:13px;padding:10px 15px;display:inline-flex;align-items:center;gap:8px}
-    .refresh-info{font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:7px}
-    .refresh-info .icon svg{width:15px;height:15px}
-    .asset-panel{position:relative;isolation:isolate;overflow:hidden;background:var(--surface);border:1px solid var(--stroke);border-radius:var(--radius);padding:23px;min-height:237px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow)}
-    .asset-panel:after{content:"";position:absolute;width:250px;height:250px;border:1px solid rgba(255,255,255,.045);border-radius:50%;left:-90px;top:-97px;box-shadow:0 0 0 35px rgba(255,255,255,.018),0 0 0 70px rgba(255,255,255,.012);z-index:-1}
-    .asset-panel-top,.asset-price-meta{display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .asset-ident{display:flex;align-items:center;gap:12px}
-    .asset-ident .symbol{width:55px;height:55px}
-    .asset-name{font-size:19px;font-weight:800;line-height:1.4}
-    .asset-ticker{font-size:11px;color:var(--muted);direction:ltr;text-align:right}
-    .asset-unit{background:var(--surface-3);border-radius:10px;padding:6px 9px;color:#ddd;font-size:11px}
-    .asset-caption{font-size:11px;color:var(--muted);margin-top:10px}
-    .asset-quote{font-size:clamp(25px,3vw,35px);font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums;direction:ltr;text-align:right;line-height:1.5}
-    .asset-price-meta{color:var(--muted);font-size:11px}
-    .asset-price-meta strong{color:var(--green);font-weight:600}
-    .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-top:17px}
-    .stat{background:var(--surface);border:1px solid var(--stroke);border-radius:var(--radius);padding:21px 22px;min-width:0;box-shadow:var(--shadow)}
-    .stat-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .stat-label{color:#b3b6c0;font-size:12px}
-    .stat-icon{display:grid;place-items:center;background:var(--surface-3);border-radius:12px;width:37px;height:37px;color:var(--orange)}
-    .stat:nth-child(2) .stat-icon{color:var(--green)}
-    .stat:nth-child(3) .stat-icon{color:#a3b7ff}
-    .stat-value{margin-top:15px;font-size:clamp(16px,2vw,24px);font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-    .stat-foot{margin-top:1px;display:flex;gap:7px;align-items:center;color:var(--muted);font-size:11px;min-height:20px}
-    .section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:37px 0 18px}
-    .section-heading{font-size:21px;font-weight:800;margin:0}
-    .section-sub{color:var(--muted);margin:2px 0 0;font-size:11px}
-    .toolbar{display:flex;align-items:center;gap:9px}
-    .field{border:1px solid var(--stroke);background:var(--surface);color:#e5e6ec;border-radius:12px;min-height:40px;outline:none;padding:8px 12px}
-    select.field{min-width:170px;cursor:pointer}
-    .search-wrap{position:relative}
-    .search-wrap .icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#9196a5}
-    input.field{padding-right:37px;width:180px}
-    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
-    .exchange{position:relative;display:flex;flex-direction:column;min-width:0;border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface);padding:18px;box-shadow:var(--shadow);transition:border-color .2s,transform .2s}
-    .exchange:hover{border-color:#5f5960;transform:translateY(-2px)}
-    .exchange-head{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-    .exchange-avatar{display:grid;place-items:center;flex:none;width:45px;height:45px;border-radius:14px;background:#373944;color:var(--orange);border:1px solid rgba(255,255,255,.04);font-weight:800;font-size:13px}
-    .exchange-name{min-width:0;flex:1;font-size:14px;font-weight:800}
-    .exchange-sub{display:block;color:var(--muted);font:400 10px/1.6 "Vazirmatn",Tahoma,sans-serif;margin-top:2px}
-    .badge{display:inline-flex;align-items:center;gap:5px;border-radius:100px;padding:4px 7px;background:#30343b;font-size:10px;color:var(--muted);white-space:nowrap}
-    .badge.ok{color:var(--green);background:rgba(77,211,159,.09)}
-    .badge.error{color:var(--red);background:rgba(247,140,149,.08)}
-    .badge .point{width:5px;height:5px;background:currentColor;border-radius:50%}
-    .quotes{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-    .quote{border-radius:15px;background:var(--surface-2);padding:13px;min-width:0}
-    .quote-label{color:var(--muted);font-size:10px}
-    .quote-value{font-size:clamp(14px,1.6vw,19px);font-weight:800;direction:ltr;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;line-height:1.6}
-    .quote.buy .quote-value{color:var(--text)}
-    .quote.sell .quote-value{color:var(--orange)}
-    .quote-unit{color:var(--subtle);font-size:10px}
-    .single-quote{grid-column:1/-1}
-    .exchange-footer{margin-top:auto;padding-top:16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .exchange-note{color:var(--muted);font-size:10px;overflow-wrap:anywhere}
-    .source-link{display:inline-flex;align-items:center;gap:4px;color:var(--orange);font-size:10px;white-space:nowrap}
-    .source-link .icon svg{width:14px;height:14px}
-    .notice{border:1px solid #665134;background:#30291f;color:#efca97;border-radius:12px;padding:11px 14px;font-size:12px;margin-top:16px}
-    .empty{grid-column:1/-1;text-align:center;background:var(--surface);border:1px dashed var(--stroke);border-radius:18px;padding:35px;color:var(--muted)}
-    .footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--stroke);padding-top:20px;margin-top:30px;color:var(--subtle);font-size:11px}
-    .bottom-nav{display:none}
-    @media(max-width:1050px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{grid-template-columns:minmax(0,1fr) minmax(250px,.8fr)}}
-    @media(max-width:700px){
-      .layout{padding:18px 14px 105px}.nav{margin-bottom:17px}
-      .nav-links{display:none}.live-pill{font-size:10px;padding:5px 10px}
-      .hero{grid-template-columns:1fr}.hero-copy{padding:5px 0 7px}.heading{font-size:27px}
-      .hero-controls{margin-top:17px}.asset-panel{min-height:210px}
-      .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
-      .stat{padding:14px;border-radius:18px}
-      .stat:nth-child(3){grid-column:1/-1}
-      .stat-value{font-size:16px;margin-top:9px}.stat-icon{width:31px;height:31px}
-      .section-head{margin-top:27px}.toolbar{width:100%}.search-wrap{flex:1}
-      input.field{width:100%}select.field{min-width:0;max-width:160px}
-      .grid{grid-template-columns:1fr;gap:11px}.exchange{padding:16px}
-      .exchange-head{margin-bottom:13px}.quote-value{font-size:18px}
-      .footer{padding-bottom:20px}
-      .bottom-nav{position:fixed;z-index:30;bottom:12px;left:12px;right:12px;max-width:420px;margin:auto;display:grid;grid-template-columns:repeat(3,1fr);border-radius:20px;background:#30333e;border:1px solid #50505b;padding:8px 5px;box-shadow:0 16px 45px rgba(0,0,0,.43)}
-      .bottom-nav a,.bottom-nav button{display:flex;flex-direction:column;align-items:center;gap:0;font-size:10px;background:none;border:0;color:#b4b5bf;padding:2px}
-      .bottom-nav .active{color:var(--orange)}
-      .bottom-nav .icon svg{width:20px;height:20px}
-    }
-    @media(max-width:360px){.toolbar{flex-direction:column;align-items:stretch}.search-wrap,select.field{width:100%;max-width:none}.stats{grid-template-columns:1fr}.stat:nth-child(3){grid-column:auto}}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.exchange,.primary{transition:none}.exchange:hover,.primary:hover{transform:none}.progress-fill.fetching{animation:none}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101019">
+<meta name="description" content="رادار رمزارز؛ قیمت تتری و تومانی تتر، بیت‌کوین، اتریوم، پکس گلد، گرام و طلای دیجیتال در صرافی‌های ایرانی">
+<title>رادار رمزارز | قیمت لحظه‌ای</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#101019;--surface:#22252e;--surface2:#2d303b;--surface3:#373b46;--border:#3c3f4c;--muted:#aaaeba;--dim:#828895;--text:#f8f9fc;--orange:#ff991a;--orange2:#ffbb63;--green:#4dd39f;--red:#ef9298}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:400 14px/1.8 "Vazirmatn",Tahoma,sans-serif;min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.65;cursor:wait}
+button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
+a{text-decoration:none;color:inherit}
+.icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon svg{height:19px;width:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.coin-icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:48px;height:48px}
+.coin-icon svg{width:100%;height:100%;display:block}
+.progress-track{position:fixed;top:0;left:0;right:0;height:4px;background:#392e23;direction:ltr;overflow:hidden;z-index:60}
+.progress-fill{width:100%;height:100%;transform:scaleX(0);transform-origin:left center;background:linear-gradient(90deg,#ffc167,#ff8b12)}
+.progress-fill.counting{animation:fillbar 10s linear forwards}
+.progress-fill.loading{transform:scaleX(1);animation:pulse .8s ease-in-out infinite alternate}
+@keyframes fillbar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes pulse{from{opacity:.4}to{opacity:1}}
+.container{max-width:1240px;margin:auto;padding:27px 25px 100px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:30px}
+.brand{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:800}
+.brand-mark{display:grid;place-items:center;width:41px;height:41px;border-radius:14px;background:var(--orange);color:#17191e}
+.brand-mark .icon svg{width:24px;height:24px;stroke-width:2}
+.header-right{display:flex;align-items:center;gap:16px}
+.head-link{color:var(--muted);font-size:12px}
+.head-link:hover{color:#fff}
+.live{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:7px 12px;color:#dadce4;font-size:11px;white-space:nowrap}
+.live i{display:block;width:7px;height:7px;border-radius:50%;background:var(--green)}
+.eyebrow{font-size:11px;color:var(--orange);letter-spacing:1.5px;font-weight:800}
+h1{margin:6px 0 8px;font-size:clamp(25px,3.2vw,39px);line-height:1.5;font-weight:800}
+.lead{color:var(--muted);margin:0;font-size:13px;max-width:510px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,.87fr);gap:24px;align-items:stretch;margin-bottom:18px}
+.hero-intro{padding:20px 0;display:flex;flex-direction:column;justify-content:center}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:22px}
+.primary{display:inline-flex;justify-content:center;align-items:center;gap:8px;background:var(--orange);border:1px solid transparent;color:#18191c;border-radius:13px;padding:11px 19px;font-weight:800}
+.primary:hover{background:var(--orange2)}
+.countdown{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:11px}
+.countdown .icon svg{height:15px;width:15px}
+.hero-card{border-radius:24px;background:var(--surface);border:1px solid var(--border);min-height:253px;padding:23px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;isolation:isolate}
+.hero-card:before{content:"";position:absolute;left:-88px;top:-87px;width:230px;height:230px;border-radius:50%;box-shadow:0 0 0 25px rgba(255,255,255,.017),0 0 0 55px rgba(255,255,255,.015),0 0 0 89px rgba(255,255,255,.011);border:1px solid rgba(255,255,255,.045);z-index:-1}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.hero-identity{display:flex;align-items:center;gap:11px}
+.hero-identity .coin-icon{width:57px;height:57px}
+.hero-name{font-size:20px;font-weight:800;line-height:1.4}
+.hero-ticker{font-size:12px;color:var(--muted);direction:ltr;text-align:right}
+.unit-pill{background:var(--surface3);padding:5px 10px;border-radius:11px;color:#e5e5e9;font-size:11px;white-space:nowrap}
+.hero-price-label{font-size:11px;color:var(--muted);margin-bottom:1px}
+.hero-price{font-size:clamp(24px,3.3vw,38px);font-weight:800;direction:ltr;text-align:right;line-height:1.6;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.hero-price small{font-size:14px;color:var(--orange);font-weight:700}
+.hero-secondary{font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap}
+.hero-secondary strong{color:#f4f4f8;font-weight:600}
+.market-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--dim);font-size:11px;margin:5px 0 0}
+.market-meta .sep{opacity:.45}
+.strip-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:27px;margin-bottom:12px}
+h2{font-size:19px;line-height:1.55;margin:0;font-weight:800}
+.strip-sub{color:var(--muted);font-size:11px;margin:3px 0 0}
+.strip-nav{display:flex;gap:7px}
+.icon-button{width:35px;height:35px;display:grid;place-items:center;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--muted)}
+.icon-button:hover{color:var(--orange)}
+.strip{display:flex;gap:12px;overflow-x:auto;padding:4px 0 13px;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:#51515e transparent;overscroll-behavior-inline:contain}
+.asset-tile{scroll-snap-align:start;flex:0 0 186px;min-height:156px;background:var(--surface);border:1px solid var(--border);border-radius:19px;color:inherit;text-align:right;display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding:14px;transition:border-color .2s,transform .2s}
+.asset-tile:not(:disabled):hover{border-color:var(--orange);transform:translateY(-2px)}
+.asset-tile:disabled{cursor:default;opacity:.55}
+.tile-top{display:flex;align-items:center;gap:9px}
+.tile-top .coin-icon{width:39px;height:39px}
+.tile-name{font-size:12px;font-weight:800;line-height:1.35}
+.tile-symbol{font-size:10px;color:var(--muted);direction:ltr;text-align:right}
+.tile-main{direction:ltr;text-align:right;font-size:19px;line-height:1.5;font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tile-main em{color:var(--orange);font-size:11px;font-weight:600;font-style:normal}
+.tile-small{color:var(--muted);font-size:10px;line-height:1.5}
+.section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-top:27px;margin-bottom:16px}
+.section-heading small{color:var(--muted);font-size:11px}
+.asset-mark{display:inline-flex;align-items:center;gap:8px}
+.asset-mark .coin-icon{width:28px;height:28px}
+.exchanges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.exchange{border:1px solid var(--border);background:var(--surface);border-radius:21px;padding:17px;min-width:0;display:flex;flex-direction:column}
+.exchange-head{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.exchange-logo{display:grid;place-items:center;flex-shrink:0;width:42px;height:42px;border-radius:13px;background:var(--surface3);font-size:13px;color:var(--orange);font-weight:800}
+.exchange-title{min-width:0;flex:1;font-size:14px;font-weight:800}
+.exchange-title small{font-size:10px;font-weight:400;display:block;color:var(--muted);direction:ltr;text-align:right}
+.status{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 7px;background:var(--surface3);font-size:10px;color:var(--muted);white-space:nowrap}
+.status.ok{color:var(--green);background:rgba(77,211,159,.09)}
+.status.error{color:var(--red);background:rgba(239,146,152,.09)}
+.status i{width:5px;height:5px;border-radius:50%;background:currentColor}
+.exchange-quote{background:var(--surface2);padding:14px;border-radius:15px;margin-bottom:7px}
+.exchange-label{font-size:10px;color:var(--muted)}
+.exchange-main{font-size:clamp(16px,1.8vw,22px);font-weight:800;direction:ltr;text-align:right;overflow-wrap:anywhere;line-height:1.6}
+.exchange-main span{color:var(--orange);font-weight:600;font-size:12px}
+.exchange-secondary{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.exchange-secondary b{color:#f5f5fa;font-weight:600}
+.exchange-source{margin-top:auto;padding-top:9px;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:35px}
+.exchange-note{color:var(--muted);font-size:10px}
+.exchange-source a{color:var(--orange);font-size:10px}
+.notice{margin-top:10px;border:1px solid #6b5131;background:#33291e;border-radius:13px;color:#eac693;padding:11px 14px;font-size:12px}
+.notice[hidden]{display:none}
+.empty{grid-column:1/-1;padding:28px;text-align:center;color:var(--muted);background:var(--surface);border-radius:15px;border:1px dashed var(--border)}
+.footer{border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:15px;margin-top:31px;padding-top:19px;color:var(--dim);font-size:11px}
+.mobile-nav{display:none}
+@media(max-width:970px){.exchanges{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{grid-template-columns:minmax(0,1fr) minmax(250px,.9fr)}}
+@media(max-width:650px){
+.container{padding:18px 14px 98px}.topbar{margin-bottom:16px}.head-link{display:none}
+.hero{grid-template-columns:1fr;gap:11px}.hero-intro{padding:5px 0 8px}h1{font-size:28px}
+.controls{margin-top:17px}.hero-card{min-height:228px}
+.strip-head{margin-top:20px}.asset-tile{flex-basis:155px;padding:11px;min-height:144px}
+.tile-main{font-size:17px}.tile-top .coin-icon{width:34px;height:34px}
+.exchanges{grid-template-columns:1fr;gap:10px}.section-heading{margin-top:22px}
+.exchange{padding:15px}.exchange-quote{margin-bottom:4px}
+.mobile-nav{position:fixed;z-index:50;bottom:12px;left:12px;right:12px;max-width:450px;margin:auto;display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #494b58;background:#30333c;border-radius:18px;padding:8px 6px;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+.mobile-nav a,.mobile-nav button{background:none;border:0;color:#b9bac5;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:10px;padding:3px}
+.mobile-nav .current{color:var(--orange)}.mobile-nav .icon svg{width:20px;height:20px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.asset-tile{transition:none}.asset-tile:hover{transform:none}.progress-fill.loading{animation:none}}
+</style>
 </head>
 <body>
-  <div class="progress-track" aria-hidden="true"><div id="progress" class="progress-fill"></div></div>
-  <main class="layout" id="home">
-    <nav class="nav" aria-label="منوی اصلی">
-      <a class="brand" href="#home">
-        <span class="brand-icon"><span class="icon" data-icon="radar"></span></span>
-        <span>رادار تتر</span>
-      </a>
-      <div class="nav-links">
-        <a href="#home">داشبورد</a>
-        <a href="#exchanges">صرافی‌ها</a>
+<div class="progress-track" aria-hidden="true"><div id="progress" class="progress-fill"></div></div>
+<main class="container" id="top">
+  <header class="topbar">
+    <a class="brand" href="#top"><span class="brand-mark"><span class="icon" data-icon="radar"></span></span><span>رادار رمزارز</span></a>
+    <div class="header-right"><a class="head-link" href="#assets">رمزارزها</a><a class="head-link" href="#exchanges">صرافی‌ها</a><span class="live"><i></i><span id="live-text">در حال استعلام</span></span></div>
+  </header>
+  <div class="hero">
+    <div class="hero-intro">
+      <span class="eyebrow" dir="ltr">LIVE CRYPTO MARKET RADAR</span>
+      <h1 id="heading">بازار تتر، در یک نگاه.</h1>
+      <p class="lead">قیمت رمزارزها را از صرافی‌های موجود ببین؛ هر رمزارز را انتخاب کن تا جزئیات آن در همین صفحه باز شود.</p>
+      <div class="controls">
+        <button class="primary" id="refresh" type="button"><span class="icon" data-icon="refresh"></span><span id="refresh-label">بروزرسانی قیمت‌ها</span></button>
+        <span class="countdown"><span class="icon" data-icon="clock"></span><span id="refresh-status" role="status">در حال دریافت قیمت‌ها…</span></span>
       </div>
-      <div class="live-pill"><span class="live-dot"></span><span id="nav-status">اتصال به بازار</span></div>
-    </nav>
-
-    <section class="hero" aria-labelledby="page-title">
-      <div class="hero-copy">
-        <span class="eyebrow" dir="ltr">USDT / IRR MARKET RADAR</span>
-        <h1 class="heading" id="page-title">بازار تتر، در یک نگاه.</h1>
-        <p class="intro">قیمت خرید و فروش تتر در صرافی‌های مختلف را با داده‌های واقعی و یک واحد مشترک مقایسه کن.</p>
-        <div class="hero-controls">
-          <button type="button" class="primary" id="refresh"><span class="icon" data-icon="refresh"></span><span id="refresh-label">بروزرسانی قیمت‌ها</span></button>
-          <span class="refresh-info"><span class="icon" data-icon="clock"></span><span id="refresh-status" role="status">دریافت قیمت‌ها…</span></span>
-        </div>
+    </div>
+    <article class="hero-card" aria-label="رمزارز انتخاب‌شده">
+      <div class="hero-top">
+        <div class="hero-identity"><span id="hero-icon"></span><div><div class="hero-name" id="hero-name">تتر</div><div class="hero-ticker" id="hero-ticker">USDT</div></div></div>
+        <span class="unit-pill" id="hero-unit">تومان</span>
       </div>
-      <article class="asset-panel" aria-label="نمای کلی تتر">
-        <div class="asset-panel-top">
-          <div class="asset-ident">
-            <span class="symbol" data-asset="USDT"></span>
-            <div><div class="asset-name">تتر</div><div class="asset-ticker">Tether · USDT</div></div>
-          </div>
-          <span class="asset-unit">تومان</span>
-        </div>
-        <div>
-          <div class="asset-caption">کمترین قیمت قابل خرید</div>
-          <div class="asset-quote" id="hero-price">—</div>
-          <div class="asset-price-meta"><span id="hero-exchange">در انتظار استعلام</span><strong id="hero-market">USDT / TOMAN</strong></div>
-        </div>
-      </article>
-    </section>
-
-    <section class="stats" aria-label="خلاصه بازار">
-      <article class="stat">
-        <div class="stat-top"><span class="stat-label">ارزان‌ترین خرید</span><span class="stat-icon"><span class="icon" data-icon="arrow-down"></span></span></div>
-        <div class="stat-value" id="best-buy">—</div><div class="stat-foot"><span class="icon" data-icon="check"></span><span id="best-buy-name">در حال بررسی</span></div>
-      </article>
-      <article class="stat">
-        <div class="stat-top"><span class="stat-label">بالاترین فروش</span><span class="stat-icon"><span class="icon" data-icon="arrow-up"></span></span></div>
-        <div class="stat-value" id="best-sell">—</div><div class="stat-foot"><span class="icon" data-icon="check"></span><span id="best-sell-name">در حال بررسی</span></div>
-      </article>
-      <article class="stat">
-        <div class="stat-top"><span class="stat-label">منابع پاسخ‌گو</span><span class="stat-icon"><span class="icon" data-icon="activity"></span></span></div>
-        <div class="stat-value" id="available">—</div><div class="stat-foot"><span class="icon" data-icon="clock"></span><span id="checked-at">هنوز استعلام نشده</span></div>
-      </article>
-    </section>
-
-    <section id="exchanges" aria-labelledby="exchange-title">
-      <div class="section-head">
-        <div><h2 class="section-heading" id="exchange-title">صرافی‌ها</h2><p class="section-sub">آخرین داده‌های تومانی دریافتی از منابع عمومی</p></div>
-        <div class="toolbar">
-          <label class="search-wrap">
-            <span class="icon" data-icon="search"></span>
-            <input class="field" id="search" type="search" aria-label="جستجوی صرافی" placeholder="جستجوی صرافی…" autocomplete="off">
-          </label>
-          <select class="field" id="sort" aria-label="مرتب‌سازی قیمت‌ها">
-            <option value="default">ترتیب پیش‌فرض</option>
-            <option value="buy">ارزان‌ترین خرید</option>
-            <option value="sell">بالاترین فروش</option>
-          </select>
-        </div>
+      <div>
+        <div class="hero-price-label" id="hero-label">کمترین قیمت قابل خرید</div>
+        <div class="hero-price" id="hero-main">—</div>
+        <div class="hero-secondary"><span id="hero-sub">در انتظار استعلام</span><strong id="hero-market">USDT / TOMAN</strong></div>
       </div>
-      <div id="warning" class="notice" hidden></div>
-      <div class="grid" id="cards" aria-live="polite"></div>
-    </section>
-
-    <footer class="footer">
-      <span>قیمت خرید = بهترین Ask و قیمت فروش = بهترین Bid. کارمزد، حجم و لغزش قیمت لحاظ نشده‌اند.</span>
-      <span>قیمت‌های فاقد داده معتبر با عدد ساختگی جایگزین نمی‌شوند.</span>
-    </footer>
-  </main>
-  <nav class="bottom-nav" aria-label="ناوبری موبایل">
-    <a class="active" href="#home"><span class="icon" data-icon="home"></span><span>داشبورد</span></a>
-    <a href="#exchanges"><span class="icon" data-icon="layers"></span><span>صرافی‌ها</span></a>
-    <button type="button" id="mobile-refresh"><span class="icon" data-icon="refresh"></span><span>بروزرسانی</span></button>
-  </nav>
+    </article>
+  </div>
+  <div class="market-meta">
+    <span id="available">منابع پاسخ‌گو: —</span><span class="sep">•</span>
+    <span id="checked-at">آخرین بروزرسانی: —</span><span class="sep">•</span><span>قیمت‌ها بدون کارمزد</span>
+  </div>
+  <section id="assets">
+    <div class="strip-head">
+      <div><h2>رمزارزهای دیگر</h2><p class="strip-sub">روی هر کارت بزن تا جای رمزارز اصلی و این کارت عوض شود.</p></div>
+      <div class="strip-nav">
+        <button class="icon-button" type="button" id="scroll-prev" aria-label="پیمایش به راست"><span class="icon" data-icon="chevron-right"></span></button>
+        <button class="icon-button" type="button" id="scroll-next" aria-label="پیمایش به چپ"><span class="icon" data-icon="chevron-left"></span></button>
+      </div>
+    </div>
+    <div class="strip" id="asset-strip" aria-label="انتخاب رمزارز"></div>
+  </section>
+  <section id="exchanges">
+    <div class="section-heading">
+      <h2 class="asset-mark"><span id="exchange-icon"></span><span id="exchange-heading">قیمت تتر در صرافی‌ها</span></h2>
+      <small id="exchange-sub">مقایسه قیمت‌ها در بازارهای موجود</small>
+    </div>
+    <div id="notice" class="notice" hidden></div>
+    <div class="exchanges" id="exchange-cards" aria-live="polite"></div>
+  </section>
+  <footer class="footer"><span>نرخ اصلی هر صرافی، بهترین قیمت خرید یک واحد رمزارز در دفتر سفارش است. معاملات واقعی شامل کارمزد و لغزش قیمت می‌شوند.</span><span>قیمت تومانی محاسبه‌شده با قیمت مستقیم بازار تومان یکسان نیست.</span></footer>
+</main>
+<nav class="mobile-nav" aria-label="پیمایش موبایل">
+  <a href="#top" class="current"><span class="icon" data-icon="home"></span><span>خانه</span></a>
+  <a href="#assets"><span class="icon" data-icon="layers"></span><span>رمزارزها</span></a>
+  <button type="button" id="mobile-refresh"><span class="icon" data-icon="refresh"></span><span>بروزرسانی</span></button>
+</nav>
 <script>
 "use strict";
-const API="https://usdt-price-radar.bashiramri84.workers.dev/api/prices";
+const API_BASE="https://usdt-price-radar.bashiramri84.workers.dev";
 const REFRESH_INTERVAL_MS=10000;
-const HIDDEN_EXCHANGES=new Set(["polno","kifpool","nipoto","ourbit","kcex","toobit"]);
+const COINS=[
+ {symbol:"USDT",name:"تتر",en:"Tether"},
+ {symbol:"BTC",name:"بیت‌کوین",en:"Bitcoin"},
+ {symbol:"ETH",name:"اتریوم",en:"Ethereum"},
+ {symbol:"PAXG",name:"پکس گلد",en:"PAX Gold"},
+ {symbol:"GRAM",name:"گرام",en:"Gram (formerly TON)"},
+ {symbol:"XAUT",name:"طلای دیجیتال",en:"Tether Gold"}
+];
+// The sixth additional asset can be activated in this slot when its symbol is provided.
+const MORE={symbol:"MORE",name:"رمزارز بعدی",en:"Coming soon",disabled:true};
+const EXCHANGE_NAMES={nobitex:"نوبیتکس",wallex:"والکس",bitpin:"بیت‌پین",bit24:"بیت ۲۴",okex:"اوکی اکسچنج",tetherland:"تترلند"};
+const EXCHANGE_MARKS={nobitex:"N",wallex:"W",bitpin:"B",bit24:"24",okex:"OK",tetherland:"T"};
 const ICONS={
- radar:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6-6"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>',
- refresh:'<path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M5.8 9A7 7 0 0 1 18.5 7L20 12M4 12l1.5 5A7 7 0 0 0 18.2 15"/>',
- clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
- check:'<path d="M5 12l4 4L19 6"/>',
- "arrow-down":'<path d="M12 4v15m-6-6 6 6 6-6"/>',
- "arrow-up":'<path d="M12 20V5m-6 6 6-6 6 6"/>',
- activity:'<path d="M3 12h4l3-7 4 14 3-7h4"/>',
- search:'<circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/>',
- home:'<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
- layers:'<path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/>',
- external:'<path d="M13 5h6v6M11 13l8-8"/><path d="M19 14v5H5V5h5"/>'
+radar:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6-6"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>',
+refresh:'<path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M5.8 9a7 7 0 0 1 12.7-2L20 12M4 12l1.5 5A7 7 0 0 0 18.2 15"/>',
+clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+home:'<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
+layers:'<path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/>',
+"chevron-right":'<path d="m9 5 7 7-7 7"/>',
+"chevron-left":'<path d="m15 5-7 7 7 7"/>'
 };
-const ASSET_ICONS={
- USDT:'<circle cx="32" cy="32" r="30" fill="#26a17b"/><path d="M13 19h38v9H37v21H27V28H13z" fill="#fff"/><ellipse cx="32" cy="30" rx="21" ry="6.3" fill="none" stroke="#fff" stroke-width="3.5"/><path d="M28 30h8v18h-8z" fill="#fff"/>',
- BTC:'<circle cx="32" cy="32" r="30" fill="#f39b18"/><text x="32" y="45" text-anchor="middle" font-size="41" font-family="Arial,sans-serif" font-weight="bold" fill="#fff">₿</text>',
- ETH:'<circle cx="32" cy="32" r="30" fill="#5869d9"/><path d="m32 9-13 24 13 8 13-8z" fill="#fff"/><path d="m19 37 13 18 13-18-13 8z" fill="#bfcaff"/>'
+const COIN_SVG={
+USDT:'<circle cx="32" cy="32" r="30" fill="#27a580"/><path d="M15 18h34v9H37v22H27V27H15z" fill="#fff"/><ellipse cx="32" cy="30" rx="20" ry="6" fill="none" stroke="#fff" stroke-width="3.5"/>',
+BTC:'<circle cx="32" cy="32" r="30" fill="#f7931a"/><text x="32" y="46" fill="#fff" font-size="41" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">₿</text>',
+ETH:'<circle cx="32" cy="32" r="30" fill="#d5d7df"/><path d="m32 8-14 25 14 8 14-8z" fill="#363943"/><path d="m18 36 14 19 14-19-14 9z" fill="#60636d"/>',
+PAXG:'<circle cx="32" cy="32" r="30" fill="#ffc51b"/><circle cx="32" cy="32" r="24" fill="#fff"/><circle cx="32" cy="32" r="19" fill="#d6a300"/><path d="M32 17l15 9v12l-15 9-15-9V26z" fill="#fff"/><circle cx="32" cy="32" r="9" fill="#e4b926"/>',
+GRAM:'<circle cx="32" cy="32" r="30" fill="#279de7"/><path d="M32 12 48 28 32 48 16 28z" fill="#fff"/><path d="M32 17 43 29 32 41 21 29z" fill="#2785ca"/>',
+XAUT:'<circle cx="32" cy="32" r="30" fill="#f2f3f5"/><circle cx="32" cy="32" r="24" fill="#c9cdd4"/><path d="M14 19h36v9H37v21H27V28H14z" fill="#fff"/><ellipse cx="32" cy="30" rx="20" ry="6" fill="none" stroke="#fff" stroke-width="3"/>',
+MORE:'<circle cx="32" cy="32" r="30" fill="#444753"/><path d="M32 20v24M20 32h24" stroke="#b8bcc6" stroke-width="5" stroke-linecap="round"/>'
 };
 const $=id=>document.getElementById(id);
-const el=(tag,cls,txt)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(txt!==undefined)node.textContent=txt;return node;};
-const amount=n=>Number.isFinite(Number(n))&&Number(n)>0?Math.round(Number(n)).toLocaleString("fa-IR"):"—";
-const shortAmount=n=>amount(n)==="—"?"—":amount(n)+" تومان";
-function assetIcon(symbol){
- const key=String(symbol||"").toUpperCase();
- const path=ASSET_ICONS[key];
- if(!path){const fallback=el("span","",key.slice(0,4)||"●");fallback.style.fontWeight="800";return fallback;}
- const wrapper=el("span","symbol");
- wrapper.innerHTML='<svg viewBox="0 0 64 64" role="img" aria-label="'+key+'">'+path+'</svg>';
- return wrapper;
+const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e};
+const valid=n=>Number.isFinite(Number(n))&&Number(n)>0;
+function fmt(n,decimals=2){
+ if(!valid(n))return "—";
+ return Number(n).toLocaleString("fa-IR",{maximumFractionDigits:decimals,minimumFractionDigits:0});
 }
-function paintStaticIcons(){
- document.querySelectorAll("[data-icon]").forEach(node=>{
-  const name=node.getAttribute("data-icon"); if(!ICONS[name])return;
-  node.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS[name]+'</svg>';
- });
- document.querySelectorAll("[data-asset]").forEach(node=>{
-  node.replaceChildren(assetIcon(node.getAttribute("data-asset")));
- });
+function coinIcon(sym){
+ const span=make("span","coin-icon");span.innerHTML='<svg viewBox="0 0 64 64" role="img" aria-label="'+sym+'">'+(COIN_SVG[sym]||COIN_SVG.MORE)+'</svg>';return span;
 }
-const EXCHANGE_MARKS={nobitex:"N",wallex:"W",bitpin:"B",bit24:"24",okex:"OK",tetherland:"T"};
-let allRows=[],busy=false,refreshTimer=null,ticker=null,nextAt=0,lastSuccess=false;
-function setProgress(phase){
- const bar=$("progress");
- bar.className="progress-fill";
- void bar.offsetWidth;
- bar.classList.add(phase);
+function initIcons(){
+ document.querySelectorAll("[data-icon]").forEach(node=>{const icon=ICONS[node.dataset.icon];if(icon)node.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+icon+'</svg>';});
 }
-function countdownText(){
+const bySymbol=s=>COINS.find(c=>c.symbol===s)||MORE;
+const initialSymbol=(()=>{const val=decodeURIComponent(location.hash.split("/")[1]||"").toUpperCase();return COINS.some(c=>c.symbol===val)?val:"USDT"})();
+let selected=initialSymbol;
+let tiles=[...COINS.map(c=>c.symbol).filter(s=>s!==initialSymbol),"MORE"];
+let oldPrices=[],marketAssets=[],lastSuccess=false,busy=false,refreshTimeout=null,ticker=null,nextAt=0;
+
+function dataFor(sym){return marketAssets.find(x=>x.symbol===sym)||null}
+function quotes(sym){
+ if(sym==="USDT"){
+  return oldPrices.map(p=>({id:p.id,name:p.name||EXCHANGE_NAMES[p.id]||p.id,
+    toman:valid(p.buy)?{ask:p.buy,bid:p.sell,estimated:false}:valid(p.last)?{ask:p.last,estimated:false}:null,
+    usdt:null,
+    direct:!!valid(p.buy),info:valid(p.buy)?"دفتر سفارش":valid(p.last)?"نرخ اطلاع‌رسانی":"فاقد قیمت",
+    status:p.status,url:p.apiUrl||null,note:p.note||""}));
+ }
+ const model=dataFor(sym);
+ return (model?.quotes||[]).map(q=>({
+    id:q.id,name:q.name||EXCHANGE_NAMES[q.id]||q.id,
+    usdt:q.usdt,toman:q.toman,direct:q.tomanKind==="direct",
+    info:q.tomanKind==="calculated"?"تومان تخمینی":"بازار مستقیم",
+    status:q.status,url:q.usdtUrl||q.tomanUrl||null,note:q.status==="ok"?"": "جفت‌ارز موجود نیست یا API پاسخ نداده"
+ }));
+}
+function bestQuote(sym){
+ const candidates=quotes(sym).filter(q=>q.status==="ok"&&valid(sym==="USDT"?q.toman?.ask:q.usdt?.ask));
+ candidates.sort((a,b)=>(sym==="USDT"?a.toman.ask:a.usdt.ask)-(sym==="USDT"?b.toman.ask:b.usdt.ask));
+ return candidates[0]||null;
+}
+function mainFormatted(sym,number){
+ if(sym==="USDT")return fmt(number,0);
+ return fmt(number,sym==="GRAM"?5:4);
+}
+function fillHero(){
+ const coin=bySymbol(selected),best=bestQuote(selected),isTether=selected==="USDT";
+ $("hero-icon").replaceChildren(coinIcon(selected));
+ $("hero-name").textContent=coin.name;
+ $("hero-ticker").textContent=coin.en+" · "+coin.symbol;
+ $("hero-unit").textContent=isTether?"تومان":"USDT";
+ $("hero-label").textContent=isTether?"کمترین قیمت تومانی خرید":"کمترین قیمت تتری خرید";
+ const main=isTether?best?.toman?.ask:best?.usdt?.ask;
+ $("hero-main").replaceChildren(document.createTextNode(mainFormatted(selected,main)+" "));
+ $("hero-main").append(make("small","",isTether?"تومان":"USDT"));
+ $("hero-market").textContent=best?best.name:"بدون نرخ معتبر";
+ const secondary=best&&selected!=="USDT"&&valid(best.toman?.ask)?"≈ "+fmt(best.toman.ask,0)+" تومان"+(best.toman.estimated?" (تخمینی)":""):"";
+ $("hero-sub").textContent=isTether?best?"مرجع: "+best.name:"داده در دسترس نیست":secondary||"قیمت تومانی در دسترس نیست";
+ $("heading").textContent="بازار "+coin.name+"، در یک نگاه.";
+ $("exchange-icon").replaceChildren(coinIcon(selected));
+ $("exchange-heading").textContent="قیمت "+coin.name+" در صرافی‌ها";
+ $("exchange-sub").textContent=isTether?"قیمت تتر به تومان":"قیمت اصلی USDT • معادل تومان با اندازه کوچک‌تر";
+ const records=quotes(selected);
+ $("available").textContent="منابع پاسخ‌گو: "+records.filter(q=>q.status==="ok").length.toLocaleString("fa-IR")+" از "+records.length.toLocaleString("fa-IR");
+ document.title="قیمت "+coin.name+" | رادار رمزارز";
+}
+function makeTile(sym,idx){
+ const coin=bySymbol(sym),tile=make("button","asset-tile");
+ tile.type="button";tile.disabled=!!coin.disabled;
+ if(!coin.disabled)tile.setAttribute("aria-label","نمایش قیمت "+coin.name);
+ const top=make("div","tile-top");top.append(coinIcon(sym));
+ const ident=make("div","");ident.append(make("div","tile-name",coin.name),make("div","tile-symbol",coin.symbol==="MORE"?"NEW":sym));
+ top.append(ident);
+ tile.append(top);
+ if(sym==="MORE"){
+  tile.append(make("div","tile-main","+"),make("div","tile-small","برای رمزارز ششم آماده است"));
+ }else{
+  const best=bestQuote(sym);
+  const isTether=sym==="USDT";
+  const main=isTether?best?.toman?.ask:best?.usdt?.ask;
+  const price=make("div","tile-main");
+  price.append(document.createTextNode(mainFormatted(sym,main)+" "));
+  price.append(make("em","",isTether?"تومان":"USDT"));
+  tile.append(price);
+  const equivalent=!isTether&&valid(best?.toman?.ask)?"≈ "+fmt(best.toman.ask,0)+" تومان"+(best.toman.estimated?" · تخمینی":""):isTether?"قیمت تومانی": "نرخ تومانی موجود نیست";
+  tile.append(make("div","tile-small",equivalent));
+  tile.addEventListener("click",()=>selectCoin(sym));
+ }
+ return tile;
+}
+function renderTiles(){
+ const frag=document.createDocumentFragment();
+ for(let i=0;i<tiles.length;i++)frag.append(makeTile(tiles[i],i));
+ const strip=$("asset-strip");
+ const offset=strip.scrollLeft;
+ strip.replaceChildren(frag);
+ strip.scrollLeft=offset;
+}
+function exchangeCard(q){
+ const article=make("article","exchange");
+ const head=make("div","exchange-head");
+ const logo=make("div","exchange-logo",EXCHANGE_MARKS[q.id]||"?");
+ const name=make("div","exchange-title",q.name||"صرافی");
+ name.append(make("small","",selected+" / "+(selected==="USDT"?"IRT":"USDT")));
+ const state=make("span","status "+(q.status==="ok"?"ok":"error"));
+ state.append(make("i",""),document.createTextNode(q.status==="ok"?"دریافت شد":"داده ناموجود"));
+ head.append(logo,name,state);
+ const panel=make("div","exchange-quote");
+ panel.append(make("div","exchange-label",selected==="USDT"?"قیمت یک تتر":"قیمت یک "+bySymbol(selected).name+" به تتر"));
+ const main=selected==="USDT"?q.toman?.ask:q.usdt?.ask;
+ const big=make("div","exchange-main");
+ big.append(document.createTextNode(mainFormatted(selected,main)+" "));
+ big.append(make("span","",selected==="USDT"?"تومان":"USDT"));
+ panel.append(big);
+ if(selected!=="USDT"){
+  const smaller=make("div","exchange-secondary",q.toman?.estimated?"معادل تقریبی:":"قیمت تومانی:");
+  smaller.append(make("b","",valid(q.toman?.ask)?fmt(q.toman.ask,0)+" تومان":"—"));
+  panel.append(smaller);
+ }
+ const foot=make("div","exchange-source");
+ foot.append(make("span","exchange-note",selected==="USDT"?q.info:(q.toman?.estimated?"تومان محاسبه‌شده":q.toman?"قیمت تومانی مستقیم":q.note)));
+ if(q.url&&q.url.startsWith("https://")){
+  const a=make("a","","منبع API");a.href=q.url;a.target="_blank";a.rel="noopener noreferrer";foot.append(a);
+ }
+ article.append(head,panel,foot);
+ return article;
+}
+function renderExchanges(){
+ const list=quotes(selected);
+ const fragment=document.createDocumentFragment();
+ if(list.length===0)fragment.append(make("div","empty","هنوز نرخ تأییدشده‌ای برای این رمزارز از API صرافی‌ها دریافت نشده است."));
+ else for(const q of list)fragment.append(exchangeCard(q));
+ $("exchange-cards").replaceChildren(fragment);
+}
+function render(){
+ fillHero();renderTiles();renderExchanges();
+ const available=quotes(selected).filter(q=>q.status==="ok").length;
+ if(lastSuccess&&available===0){$("notice").hidden=false;$("notice").textContent="هیچ منبعی برای این رمزارز نرخ معتبر برنگردانده است؛ قیمت‌سازی یا تخمین بدون مبنا انجام نمی‌شود.";}
+ else if(lastSuccess){$("notice").hidden=true;$("notice").textContent="";}
+}
+function selectCoin(sym,writeHash=true){
+ if(sym===selected||!COINS.some(c=>c.symbol===sym))return;
+ const index=tiles.indexOf(sym);
+ if(index<0)return;
+ const previous=selected;
+ selected=sym;tiles[index]=previous;
+ render();
+ if(writeHash)history.pushState({asset:sym},"","#coin/"+sym);
+}
+function syncFromUrl(){
+ const next=(location.hash.startsWith("#coin/")?location.hash.split("/")[1]:"USDT")?.toUpperCase();
+ if(next&&next!==selected&&COINS.some(c=>c.symbol===next))selectCoin(next,false);
+}
+function setProgress(mode){
+ const bar=$("progress");bar.className="progress-fill";void bar.offsetWidth;bar.classList.add(mode);
+}
+function countdown(){
  const n=Math.max(0,Math.ceil((nextAt-Date.now())/1000));
  $("refresh-status").textContent="دریافت بعدی: "+n.toLocaleString("fa-IR")+" ثانیه";
 }
-function schedule(){
- clearTimeout(refreshTimer);clearInterval(ticker);
- nextAt=Date.now()+REFRESH_INTERVAL_MS;
- setProgress("counting");countdownText();
- ticker=setInterval(countdownText,1000);
- refreshTimer=setTimeout(refresh,REFRESH_INTERVAL_MS);
+function planRefresh(){
+ clearTimeout(refreshTimeout);clearInterval(ticker);
+ nextAt=Date.now()+REFRESH_INTERVAL_MS;setProgress("counting");countdown();
+ ticker=setInterval(countdown,1000);
+ refreshTimeout=setTimeout(refresh,REFRESH_INTERVAL_MS);
 }
-function quoteCell(label,value,kind,unit){
- const cell=el("div","quote "+kind);
- cell.append(el("div","quote-label",label),el("div","quote-value",amount(value)),el("div","quote-unit",unit||"تومان"));
- return cell;
-}
-function cardFor(row){
- const card=el("article","exchange");
- const head=el("div","exchange-head");
- const avatar=el("span","exchange-avatar",EXCHANGE_MARKS[row.id]||String(row.name||"?").slice(0,1));
- const name=el("div","exchange-name",row.name||row.id);
- name.append(el("span","exchange-sub","USDT / TOMAN"));
- const status=row.status==="ok"?"دریافت شد":row.status==="error"?"خطای API":row.status==="no_irt"?"بدون بازار تومان":"داده ناموجود";
- const badge=el("span","badge "+(row.status==="ok"?"ok":row.status==="error"?"error":""));
- badge.append(el("span","point"),document.createTextNode(status));
- head.append(avatar,name,badge);
- const quotes=el("div","quotes");
- const hasBook=Number(row.buy)>0||Number(row.sell)>0;
- if(hasBook){
-   quotes.append(quoteCell("خرید تتر",row.buy,"buy"),quoteCell("فروش تتر",row.sell,"sell"));
- }else if(Number(row.last)>0){
-   quotes.append(quoteCell("نرخ اطلاع‌رسانی",row.last,"single-quote"));
- }else if(Number(row.min)>0){
-   quotes.append(quoteCell("کمترین نرخ OTC",row.min,"buy"),quoteCell("بیشترین نرخ OTC",row.max,"sell"));
- }else{
-   quotes.append(quoteCell("نرخ تومانی",null,"single-quote"));
- }
- const footer=el("div","exchange-footer");
- footer.append(el("span","exchange-note",row.note||"اطلاعات تکمیلی در دسترس نیست"));
- if(row.apiUrl&&/^https:\/\//.test(row.apiUrl)){
-   const a=el("a","source-link");
-   a.href=row.apiUrl;a.rel="noopener noreferrer";a.target="_blank";
-   a.append(document.createTextNode("API"),el("span","icon"));
-   a.lastChild.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS.external+'</svg>';
-   footer.append(a);
- }
- card.append(head,quotes,footer);
- return card;
-}
-function render(){
- const q=$("search").value.trim().toLocaleLowerCase("fa");
- let rows=allRows.filter(x=>!q||String(x.name||"").toLocaleLowerCase("fa").includes(q)||String(x.id||"").toLowerCase().includes(q));
- const order=$("sort").value;
- if(order==="buy")rows.sort((a,b)=>(a.buy>0?a.buy:Infinity)-(b.buy>0?b.buy:Infinity));
- if(order==="sell")rows.sort((a,b)=>(b.sell>0?b.sell:-Infinity)-(a.sell>0?a.sell:-Infinity));
- const frag=document.createDocumentFragment();
- if(!rows.length)frag.append(el("div","empty","صرافی مطابق جستجوی شما پیدا نشد."));
- for(const row of rows)frag.append(cardFor(row));
- $("cards").replaceChildren(frag);
-}
-function updateSummary(rows){
- const good=rows.filter(r=>r.status==="ok");
- const cheapest=good.filter(r=>Number(r.buy)>0).sort((a,b)=>a.buy-b.buy)[0];
- const highest=good.filter(r=>Number(r.sell)>0).sort((a,b)=>b.sell-a.sell)[0];
- $("best-buy").textContent=shortAmount(cheapest?.buy);
- $("best-buy-name").textContent=cheapest?.name||"قیمت معتبر موجود نیست";
- $("best-sell").textContent=shortAmount(highest?.sell);
- $("best-sell-name").textContent=highest?.name||"قیمت معتبر موجود نیست";
- $("hero-price").textContent=shortAmount(cheapest?.buy);
- $("hero-exchange").textContent=cheapest?"قابل خرید از "+cheapest.name:"نرخ قابل مقایسه موجود نیست";
- $("available").textContent=good.length.toLocaleString("fa-IR")+" / "+rows.length.toLocaleString("fa-IR");
+async function getJSON(path){
+ const response=await fetch(API_BASE+path+(path.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
+ if(!response.ok)throw Error("HTTP "+response.status);
+ return response.json();
 }
 async function refresh(){
  if(busy)return;
- busy=true;clearTimeout(refreshTimer);clearInterval(ticker);
- setProgress("fetching");
- $("refresh-label").textContent="در حال دریافت…";
- $("refresh-status").textContent="در حال دریافت قیمت‌های تازه…";
- $("refresh").disabled=true;$("mobile-refresh").disabled=true;
- $("nav-status").textContent="در حال استعلام";
- try{
-   const resp=await fetch(API+"?t="+Date.now(),{cache:"no-store"});
-   if(!resp.ok)throw Error("HTTP "+resp.status);
-   const data=await resp.json();
-   if(!Array.isArray(data.prices))throw Error("پاسخ نامعتبر");
-   allRows=data.prices.filter(r=>!HIDDEN_EXCHANGES.has(r.id));
-   if(allRows.length===0)throw Error("اطلاعات صرافی‌ها خالی است");
-   render();updateSummary(allRows);
-   lastSuccess=true;
-   $("checked-at").textContent="آخرین استعلام: "+new Date(data.fetchedAt||Date.now()).toLocaleTimeString("fa-IR");
-   $("nav-status").textContent="آخرین داده بازار";
-   const available=allRows.filter(x=>x.status==="ok").length;
-   $("warning").hidden=available>0;
-   $("warning").textContent=available===0?"هیچ منبعی قیمت معتبر برنگرداند. وضعیت هر صرافی را بررسی کنید.":"";
- }catch(err){
-   $("nav-status").textContent="خطای اتصال";
-   $("warning").hidden=false;
-   $("warning").textContent=lastSuccess?"ارتباط برقرار نشد؛ قیمت‌های نمایش‌داده‌شده مربوط به آخرین استعلام موفق هستند.":"خطای ارتباط با سرویس قیمت‌ها: "+err.message;
-   if(!lastSuccess){$("cards").replaceChildren(el("div","empty","دریافت قیمت‌ها ممکن نشد. دوباره تلاش کنید."));}
- }finally{
-   busy=false;$("refresh").disabled=false;$("mobile-refresh").disabled=false;
-   $("refresh-label").textContent="بروزرسانی قیمت‌ها";
-   schedule();
+ busy=true;clearTimeout(refreshTimeout);clearInterval(ticker);setProgress("loading");
+ $("refresh").disabled=true;$("mobile-refresh").disabled=true;$("refresh-label").textContent="در حال دریافت…";
+ $("refresh-status").textContent="در حال استعلام جدید…";$("live-text").textContent="در حال دریافت";
+ const [legacy,markets]=await Promise.allSettled([getJSON("/api/prices"),getJSON("/api/markets")]);
+ if(legacy.status==="fulfilled"&&Array.isArray(legacy.value.prices))oldPrices=legacy.value.prices;
+ if(markets.status==="fulfilled"&&Array.isArray(markets.value.assets))marketAssets=markets.value.assets;
+ const success=(legacy.status==="fulfilled"||markets.status==="fulfilled");
+ if(success){
+  lastSuccess=true;
+  const time=markets.status==="fulfilled"?markets.value.fetchedAt:legacy.value.fetchedAt;
+  $("checked-at").textContent="آخرین استعلام: "+new Date(time||Date.now()).toLocaleTimeString("fa-IR");
+  $("live-text").textContent="داده بازار";
+  render();
+  if(legacy.status==="rejected"||markets.status==="rejected"){
+   $("notice").hidden=false;
+   $("notice").textContent="بخشی از اطلاعات صرافی‌ها دریافت نشد؛ بخش‌های فاقد داده با خط تیره نشان داده می‌شوند.";
+  }
+ }else{
+  $("live-text").textContent="خطای اتصال";
+  $("notice").hidden=false;
+  $("notice").textContent=lastSuccess?"ارتباط قطع شد؛ قیمت‌های نمایش‌داده‌شده مربوط به آخرین استعلام موفق هستند.":"ارتباط با API قیمت‌ها برقرار نشد؛ مجدداً تلاش کنید.";
  }
+ busy=false;$("refresh").disabled=false;$("mobile-refresh").disabled=false;$("refresh-label").textContent="بروزرسانی قیمت‌ها";
+ planRefresh();
 }
-paintStaticIcons();
+initIcons();
 $("refresh").addEventListener("click",refresh);
 $("mobile-refresh").addEventListener("click",refresh);
-$("search").addEventListener("input",render);
-$("sort").addEventListener("change",render);
-refresh();
+$("scroll-prev").addEventListener("click",()=>$("asset-strip").scrollBy({left:215,behavior:"smooth"}));
+$("scroll-next").addEventListener("click",()=>$("asset-strip").scrollBy({left:-215,behavior:"smooth"}));
+window.addEventListener("hashchange",syncFromUrl);
+window.addEventListener("popstate",syncFromUrl);
+render();refresh();
 </script>
 </body>
 </html>
