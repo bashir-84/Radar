@@ -48,6 +48,8 @@ footer{margin-top:24px;color:var(--muted);font-size:12px}
 </main>
 <script>
 const API="https://usdt-price-radar.bashiramri84.workers.dev/api/prices";
+const REFRESH_INTERVAL_MS=10000;
+const HIDDEN_EXCHANGES=new Set(["polno","kifpool","nipoto","ourbit","kcex","toobit"]);
 const $=id=>document.getElementById(id);
 const money=v=>Number.isFinite(v)&&v>0?Math.round(v).toLocaleString("fa-IR")+" تومان":"—";
 const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x};
@@ -76,10 +78,10 @@ try{
 const response=await fetch(API+"?t="+Date.now(),{cache:"no-store"});
 if(!response.ok)throw new Error("HTTP "+response.status);
 const data=await response.json();if(!Array.isArray(data.prices))throw new Error("Invalid response");
-draw(data.prices);$("checked-at").textContent=new Date(data.fetchedAt||Date.now()).toLocaleTimeString("fa-IR");
+draw(data.prices.filter(row=>!HIDDEN_EXCHANGES.has(row.id)));$("checked-at").textContent=new Date(data.fetchedAt||Date.now()).toLocaleTimeString("fa-IR");
 }catch(e){$("checked-at").textContent="خطای ارتباط: "+e.message}
 finally{busy=false;$("refresh").disabled=false;$("refresh").textContent="↻ دریافت قیمت‌ها"}
 }
-$("refresh").addEventListener("click",refresh);refresh();
+$("refresh").addEventListener("click",refresh);refresh();setInterval(refresh,REFRESH_INTERVAL_MS);
 </script>
 </body></html>
