@@ -22,7 +22,8 @@ a{text-decoration:none;color:inherit}
 .icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .icon svg{height:19px;width:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .coin-icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:48px;height:48px}
-.coin-icon svg{width:100%;height:100%;display:block}
+.coin-icon svg,.coin-icon img{width:100%;height:100%;display:block;object-fit:contain}
+.coin-fallback{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:#383d48;color:#e8eaef;font-size:11px;font-weight:800;direction:ltr}
 .progress-track{position:fixed;top:0;left:0;right:0;height:4px;background:#392e23;direction:ltr;overflow:hidden;z-index:60}
 .progress-fill{width:100%;height:100%;transform:scaleX(0);transform-origin:left center;background:linear-gradient(90deg,#ffc167,#ff8b12)}
 .progress-fill.counting{animation:fillbar 10s linear forwards}
@@ -195,8 +196,6 @@ const COINS=[
  {symbol:"GRAM",name:"گرام",en:"Gram (formerly TON)"},
  {symbol:"XAUT",name:"طلای دیجیتال",en:"Tether Gold"}
 ];
-// The sixth additional asset can be activated in this slot when its symbol is provided.
-const MORE={symbol:"MORE",name:"رمزارز بعدی",en:"Coming soon",disabled:true};
 const EXCHANGE_NAMES={nobitex:"نوبیتکس",wallex:"والکس",bitpin:"بیت‌پین",bit24:"بیت ۲۴",okex:"اوکی اکسچنج",tetherland:"تترلند"};
 const EXCHANGE_MARKS={nobitex:"N",wallex:"W",bitpin:"B",bit24:"24",okex:"OK",tetherland:"T"};
 const ICONS={
@@ -208,15 +207,6 @@ layers:'<path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/>
 "chevron-right":'<path d="m9 5 7 7-7 7"/>',
 "chevron-left":'<path d="m15 5-7 7 7 7"/>'
 };
-const COIN_SVG={
-USDT:'<circle cx="32" cy="32" r="30" fill="#27a580"/><path d="M15 18h34v9H37v22H27V27H15z" fill="#fff"/><ellipse cx="32" cy="30" rx="20" ry="6" fill="none" stroke="#fff" stroke-width="3.5"/>',
-BTC:'<circle cx="32" cy="32" r="30" fill="#f7931a"/><text x="32" y="46" fill="#fff" font-size="41" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">₿</text>',
-ETH:'<circle cx="32" cy="32" r="30" fill="#d5d7df"/><path d="m32 8-14 25 14 8 14-8z" fill="#363943"/><path d="m18 36 14 19 14-19-14 9z" fill="#60636d"/>',
-PAXG:'<circle cx="32" cy="32" r="30" fill="#ffc51b"/><circle cx="32" cy="32" r="24" fill="#fff"/><circle cx="32" cy="32" r="19" fill="#d6a300"/><path d="M32 17l15 9v12l-15 9-15-9V26z" fill="#fff"/><circle cx="32" cy="32" r="9" fill="#e4b926"/>',
-GRAM:'<circle cx="32" cy="32" r="30" fill="#279de7"/><path d="M32 12 48 28 32 48 16 28z" fill="#fff"/><path d="M32 17 43 29 32 41 21 29z" fill="#2785ca"/>',
-XAUT:'<circle cx="32" cy="32" r="30" fill="#f2f3f5"/><circle cx="32" cy="32" r="24" fill="#c9cdd4"/><path d="M14 19h36v9H37v21H27V28H14z" fill="#fff"/><ellipse cx="32" cy="30" rx="20" ry="6" fill="none" stroke="#fff" stroke-width="3"/>',
-MORE:'<circle cx="32" cy="32" r="30" fill="#444753"/><path d="M32 20v24M20 32h24" stroke="#b8bcc6" stroke-width="5" stroke-linecap="round"/>'
-};
 const $=id=>document.getElementById(id);
 const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e};
 const valid=n=>Number.isFinite(Number(n))&&Number(n)>0;
@@ -225,15 +215,22 @@ function fmt(n,decimals=2){
  return Number(n).toLocaleString("fa-IR",{maximumFractionDigits:decimals,minimumFractionDigits:0});
 }
 function coinIcon(sym){
- const span=make("span","coin-icon");span.innerHTML='<svg viewBox="0 0 64 64" role="img" aria-label="'+sym+'">'+(COIN_SVG[sym]||COIN_SVG.MORE)+'</svg>';return span;
+ const span=make("span","coin-icon");
+ const img=document.createElement("img");
+ img.src="assets/icons/"+sym.toLowerCase()+".svg";
+ img.alt="لوگوی "+(COINS.find(c=>c.symbol===sym)?.name||sym);
+ img.width=48;img.height=48;img.decoding="async";
+ img.onerror=()=>span.replaceChildren(make("span","coin-fallback",sym));
+ span.append(img);
+ return span;
 }
 function initIcons(){
  document.querySelectorAll("[data-icon]").forEach(node=>{const icon=ICONS[node.dataset.icon];if(icon)node.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+icon+'</svg>';});
 }
-const bySymbol=s=>COINS.find(c=>c.symbol===s)||MORE;
+const bySymbol=s=>COINS.find(c=>c.symbol===s)||COINS[0];
 const initialSymbol=(()=>{const val=decodeURIComponent(location.hash.split("/")[1]||"").toUpperCase();return COINS.some(c=>c.symbol===val)?val:"USDT"})();
 let selected=initialSymbol;
-let tiles=[...COINS.map(c=>c.symbol).filter(s=>s!==initialSymbol),"MORE"];
+let tiles=COINS.map(c=>c.symbol).filter(s=>s!==initialSymbol);
 let oldPrices=[],marketAssets=[],lastSuccess=false,busy=false,refreshTimeout=null,ticker=null,nextAt=0;
 
 function dataFor(sym){return marketAssets.find(x=>x.symbol===sym)||null}
@@ -283,28 +280,22 @@ function fillHero(){
  $("available").textContent="منابع پاسخ‌گو: "+records.filter(q=>q.status==="ok").length.toLocaleString("fa-IR")+" از "+records.length.toLocaleString("fa-IR");
  document.title="قیمت "+coin.name+" | رادار رمزارز";
 }
-function makeTile(sym,idx){
+function makeTile(sym){
  const coin=bySymbol(sym),tile=make("button","asset-tile");
- tile.type="button";tile.disabled=!!coin.disabled;
- if(!coin.disabled)tile.setAttribute("aria-label","نمایش قیمت "+coin.name);
+ tile.type="button";tile.setAttribute("aria-label","نمایش قیمت "+coin.name);
  const top=make("div","tile-top");top.append(coinIcon(sym));
- const ident=make("div","");ident.append(make("div","tile-name",coin.name),make("div","tile-symbol",coin.symbol==="MORE"?"NEW":sym));
- top.append(ident);
- tile.append(top);
- if(sym==="MORE"){
-  tile.append(make("div","tile-main","+"),make("div","tile-small","برای رمزارز ششم آماده است"));
- }else{
-  const best=bestQuote(sym);
-  const isTether=sym==="USDT";
-  const main=isTether?best?.toman?.ask:best?.usdt?.ask;
-  const price=make("div","tile-main");
-  price.append(document.createTextNode(mainFormatted(sym,main)+" "));
-  price.append(make("em","",isTether?"تومان":"USDT"));
-  tile.append(price);
-  const equivalent=!isTether&&valid(best?.toman?.ask)?"≈ "+fmt(best.toman.ask,0)+" تومان"+(best.toman.estimated?" · تخمینی":""):isTether?"قیمت تومانی": "نرخ تومانی موجود نیست";
-  tile.append(make("div","tile-small",equivalent));
-  tile.addEventListener("click",()=>selectCoin(sym));
- }
+ const ident=make("div","");
+ ident.append(make("div","tile-name",coin.name),make("div","tile-symbol",sym));
+ top.append(ident);tile.append(top);
+ const best=bestQuote(sym),isTether=sym==="USDT";
+ const main=isTether?best?.toman?.ask:best?.usdt?.ask;
+ const price=make("div","tile-main");
+ price.append(document.createTextNode(mainFormatted(sym,main)+" "));
+ price.append(make("em","",isTether?"تومان":"USDT"));
+ tile.append(price);
+ const equivalent=!isTether&&valid(best?.toman?.ask)?"≈ "+fmt(best.toman.ask,0)+" تومان"+(best.toman.estimated?" · تخمینی":""):isTether?"قیمت تومانی":"نرخ تومانی موجود نیست";
+ tile.append(make("div","tile-small",equivalent));
+ tile.addEventListener("click",()=>selectCoin(sym));
  return tile;
 }
 function renderTiles(){
